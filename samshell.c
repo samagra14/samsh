@@ -1,5 +1,6 @@
 
 #define SAMSH_BUFFER_SIZE 1024
+#define SAMSH_TOK_BUFSIZE 64
 
 char * samsh_read(){
   int bufsize = SAMSH_BUFFER_SIZE;
@@ -14,14 +15,14 @@ char * samsh_read(){
 
 
   while (1){
-    c = getChar();
+    character = getChar();
 
-    if (c==EOF || c=='\n'){
+    if (character ==EOF || character=='\n'){
       buffer[position] = '\0';
       return buffer;
     }
     else{
-      buffer[position] = c;
+      buffer[position] = character;
     }
     position ++;
 
@@ -36,11 +37,36 @@ char * samsh_read(){
   }
 }
 
+#define SAMSH_TOK_DLM ' \n\t\a\r'
+
 char ** samsh_parse(char*line){
-  
+  int bufsize = SAMSH_TOK_BUFSIZE, position =0;
+  char * token;
+  char ** tokens = malloc (sizeof*(char*)*bufsize) ;
+  if (!tokens){
+    fprintf(stderr, "%s\n","samsh: allocation error" );
+    exit(EXIT_FAILURE);
+  }
+
+  token = strtok(line,SAMSH_TOK_DLM);
+  while(token!= NULL){
+    tokens[position] = token;
+    position ++;
+    if(position>bufsize){
+      bufsize+=bufsize;
+      tokens = realloc(tokens,bufsize);
+      if (!tokens){
+        fprintf(stderr, "%s\n","samsh: allocation error" );
+        exit(EXIT_FAILURE);
+      }
+    }
+    token = strtok(NULL,SAMSH_TOK_DLM);
+  }
+  tokens[position] = NULL;
+  return tokens;
 }
 
-void samsh_loop(){
+void samsh_loop(void){
   char *line;
   char **args;
   int status;
